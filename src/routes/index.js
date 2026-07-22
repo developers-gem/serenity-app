@@ -15,8 +15,8 @@ router.get('/health', (req, res) => res.json({ status: 'ok', service: 'serenity-
 
 router.use('/auth', authRoutes);
 router.use('/sage', sageRoutes);
-router.use('/mood', moodRoutes);
-router.use('/journal', journalRoutes);
+router.use('/mood', moodRoutes);  //done
+router.use('/journal', journalRoutes);  //done
 router.use('/therapists', therapistRoutes);
 router.use('/sessions', sessionRoutes);
 router.use('/billing', billingRoutes);

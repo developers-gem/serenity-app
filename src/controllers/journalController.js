@@ -1,52 +1,132 @@
-const JournalEntry = require('../models/JournalEntry');
-const { ApiError } = require('../middleware/errorHandler');
-const asyncHandler = require('../middleware/asyncHandler');
-
-function serialize(entry) {
-  return {
-    id: entry._id.toString(),
-    title: entry.title,
-    body: entry.body,
-    moodScore: entry.moodScore,
-    createdAt: entry.createdAt,
-  };
-}
-
-/**
- * GET /api/journal
- */
-const listEntries = asyncHandler(async (req, res) => {
-  const entries = await JournalEntry.find({ user: req.user._id }).sort({ createdAt: -1 }).lean();
-  res.json(entries.map(serialize));
-});
+const Journal = require("../models/Journal");
+const asyncHandler = require("../middleware/asyncHandler");
 
 /**
  * POST /api/journal
- * Body: { title, body, moodScore }
+ * Create Journal
  */
-const createEntry = asyncHandler(async (req, res) => {
-  const { title, body, moodScore } = req.body;
-  if (!body || !body.trim()) {
-    throw new ApiError(400, 'body is required.');
-  }
+const createJournal = asyncHandler(async (req, res) => {
+  const { title, content, mood, tags } = req.body;
 
-  const entry = await JournalEntry.create({
+  const journal = await Journal.create({
     user: req.user._id,
-    title: title && title.trim() ? title.trim() : 'Untitled entry',
-    body: body.trim(),
-    moodScore: typeof moodScore === 'number' ? moodScore : null,
+    title,
+    content,
+    mood,
+    tags,
   });
 
-  res.status(201).json(serialize(entry));
+  res.status(201).json({
+    success: true,
+    message: "Journal created successfully.",
+    data: journal,
+  });
+});
+
+/**
+ * GET /api/journal
+ * Get All Journals
+ */
+const getAllJournals = asyncHandler(async (req, res) => {
+  const journals = await Journal.find({
+    user: req.user._id,
+  }).sort({ createdAt: -1 });
+
+  res.json({
+    success: true,
+    count: journals.length,
+    data: journals,
+  });
+});
+
+/**
+ * GET /api/journal/:id
+ * Get Journal By ID
+ */
+const getJournalById = asyncHandler(async (req, res) => {
+  const journal = await Journal.findOne({
+    _id: req.params.id,
+    user: req.user._id,
+  });
+
+  if (!journal) {
+    return res.status(404).json({
+      success: false,
+      message: "Journal not found.",
+    });
+  }
+
+  res.json({
+    success: true,
+    data: journal,
+  });
+});
+
+/**
+ * PUT /api/journal/:id
+ * Update Journal
+ */
+const updateJournal = asyncHandler(async (req, res) => {
+  const { title, content, mood, tags } = req.body;
+
+  const journal = await Journal.findOneAndUpdate(
+    {
+      _id: req.params.id,
+      user: req.user._id,
+    },
+    {
+      title,
+      content,
+      mood,
+      tags,
+    },
+    {
+      new: true,
+      runValidators: true,
+    }
+  );
+
+  if (!journal) {
+    return res.status(404).json({
+      success: false,
+      message: "Journal not found.",
+    });
+  }
+
+  res.json({
+    success: true,
+    message: "Journal updated successfully.",
+    data: journal,
+  });
 });
 
 /**
  * DELETE /api/journal/:id
+ * Delete Journal
  */
-const deleteEntry = asyncHandler(async (req, res) => {
-  const entry = await JournalEntry.findOneAndDelete({ _id: req.params.id, user: req.user._id });
-  if (!entry) throw new ApiError(404, 'Journal entry not found.');
-  res.status(204).send();
+const deleteJournal = asyncHandler(async (req, res) => {
+  const journal = await Journal.findOneAndDelete({
+    _id: req.params.id,
+    user: req.user._id,
+  });
+
+  if (!journal) {
+    return res.status(404).json({
+      success: false,
+      message: "Journal not found.",
+    });
+  }
+
+  res.json({
+    success: true,
+    message: "Journal deleted successfully.",
+  });
 });
 
-module.exports = { listEntries, createEntry, deleteEntry };
+module.exports = {
+  createJournal,
+  getAllJournals,
+  getJournalById,
+  updateJournal,
+  deleteJournal,
+};

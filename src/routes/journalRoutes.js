@@ -1,12 +1,25 @@
-const express = require('express');
-const { listEntries, createEntry, deleteEntry } = require('../controllers/journalController');
-const { requireAuth } = require('../middleware/auth');
+const express = require("express");
+
+const {
+  createJournal,
+  getAllJournals,
+  getJournalById,
+  updateJournal,
+  deleteJournal,
+} = require("../controllers/journalController");
+
+const { requireAuth } = require("../middleware/auth");
 
 const router = express.Router();
-router.use(requireAuth);
 
-router.get('/', listEntries);
-router.post('/', createEntry);
-router.delete('/:id', deleteEntry);
+router.post("/", requireAuth, createJournal);
+
+router.get("/", requireAuth, getAllJournals);
+
+router.get("/:id", requireAuth, getJournalById);
+
+router.put("/:id", requireAuth, updateJournal);
+
+router.delete("/:id", requireAuth, deleteJournal);
 
 module.exports = router;
