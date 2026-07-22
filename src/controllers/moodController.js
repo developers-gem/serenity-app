@@ -1,56 +1,130 @@
-const MoodEntry = require('../models/MoodEntry');
-const { ApiError } = require('../middleware/errorHandler');
-const asyncHandler = require('../middleware/asyncHandler');
-
-function serialize(entry) {
-  return {
-    id: entry._id.toString(),
-    score: entry.score,
-    tags: entry.tags,
-    note: entry.note,
-    createdAt: entry.createdAt,
-  };
-}
+const Mood = require("../models/Mood");
+const asyncHandler = require("../middleware/asyncHandler");
 
 /**
  * POST /api/mood
- * Body: { score, tags, note }
+ * Create Mood
  */
-const logMood = asyncHandler(async (req, res) => {
-  const { score, tags, note } = req.body;
-  if (typeof score !== 'number' || score < 1 || score > 10) {
-    throw new ApiError(400, 'score must be a number between 1 and 10.');
-  }
+const createMood = asyncHandler(async (req, res) => {
+  const { mood, intensity, note } = req.body;
 
-  const entry = await MoodEntry.create({
+  const newMood = await Mood.create({
     user: req.user._id,
-    score,
-    tags: Array.isArray(tags) ? tags : [],
-    note: note || null,
+    mood,
+    intensity,
+    note,
   });
 
-  res.status(201).json(serialize(entry));
+  res.status(201).json({
+    success: true,
+    message: "Mood added successfully.",
+    data: newMood,
+  });
 });
 
 /**
- * GET /api/mood?limit=30
+ * GET /api/mood
+ * Get All Mood Logs
  */
-const getRecentEntries = asyncHandler(async (req, res) => {
-  const limit = Math.min(parseInt(req.query.limit, 10) || 30, 100);
-  const entries = await MoodEntry.find({ user: req.user._id })
-    .sort({ createdAt: -1 })
-    .limit(limit)
-    .lean();
-  res.json(entries.map(serialize));
+const getAllMoods = asyncHandler(async (req, res) => {
+  const moods = await Mood.find({
+    user: req.user._id,
+  }).sort({ createdAt: -1 });
+
+  res.json({
+    success: true,
+    count: moods.length,
+    data: moods,
+  });
 });
 
 /**
- * GET /api/mood/latest
+ * GET /api/mood/:id
+ * Get Single Mood
  */
-const getLatestEntry = asyncHandler(async (req, res) => {
-  const entry = await MoodEntry.findOne({ user: req.user._id }).sort({ createdAt: -1 }).lean();
-  if (!entry) return res.status(204).send();
-  res.json(serialize(entry));
+const getMoodById = asyncHandler(async (req, res) => {
+  const mood = await Mood.findOne({
+    _id: req.params.id,
+    user: req.user._id,
+  });
+
+  if (!mood) {
+    return res.status(404).json({
+      success: false,
+      message: "Mood not found.",
+    });
+  }
+
+  res.json({
+    success: true,
+    data: mood,
+  });
 });
 
-module.exports = { logMood, getRecentEntries, getLatestEntry };
+/**
+ * PUT /api/mood/:id
+ * Update Mood
+ */
+const updateMood = asyncHandler(async (req, res) => {
+  const { mood, intensity, note } = req.body;
+
+  const updatedMood = await Mood.findOneAndUpdate(
+    {
+      _id: req.params.id,
+      user: req.user._id,
+    },
+    {
+      mood,
+      intensity,
+      note,
+    },
+    {
+      new: true,
+      runValidators: true,
+    }
+  );
+
+  if (!updatedMood) {
+    return res.status(404).json({
+      success: false,
+      message: "Mood not found.",
+    });
+  }
+
+  res.json({
+    success: true,
+    message: "Mood updated successfully.",
+    data: updatedMood,
+  });
+});
+
+/**
+ * DELETE /api/mood/:id
+ * Delete Mood
+ */
+const deleteMood = asyncHandler(async (req, res) => {
+  const deletedMood = await Mood.findOneAndDelete({
+    _id: req.params.id,
+    user: req.user._id,
+  });
+
+  if (!deletedMood) {
+    return res.status(404).json({
+      success: false,
+      message: "Mood not found.",
+    });
+  }
+
+  res.json({
+    success: true,
+    message: "Mood deleted successfully.",
+  });
+});
+
+module.exports = {
+  createMood,
+  getAllMoods,
+  getMoodById,
+  updateMood,
+  deleteMood,
+};
