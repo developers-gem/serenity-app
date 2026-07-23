@@ -4,8 +4,10 @@ const router = express.Router();
 
 const { requireAuth } = require("../middleware/auth");
 
-const { chat } = require("../controllers/sageController");
+const {
+  dashboard,
+} = require("../controllers/dashboardController");
 
-router.post("/chat", requireAuth, chat);
+router.get("/", requireAuth, dashboard);
 
 module.exports = router;
