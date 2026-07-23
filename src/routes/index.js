@@ -13,7 +13,7 @@ const router = express.Router();
 
 router.get('/health', (req, res) => res.json({ status: 'ok', service: 'serenity-backend' }));
 
-router.use('/auth', authRoutes);
+router.use('/auth', authRoutes);  //done
 router.use('/sage', sageRoutes);
 router.use('/mood', moodRoutes);  //done
 router.use('/journal', journalRoutes);  //done

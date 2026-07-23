@@ -1,32 +1,46 @@
-const Therapist = require('../models/Therapist');
+const asyncHandler = require("../middleware/asyncHandler");
+const {
+  searchTherapists,
+  getTherapistDetails,
+} = require("../services/googlePlacesService");
 
-function serialize(t) {
-  return {
-    id: t._id.toString(),
-    name: t.name,
-    specialty: t.specialty,
-    pricePerSession: t.pricePerSession,
-    bio: t.bio,
-    languages: t.languages,
-    approaches: t.approaches,
-    rating: t.rating,
-    yearsExperience: t.yearsExperience,
-  };
-}
+const search = asyncHandler(async (req, res) => {
+  const { query, lat, lng, radius } = req.query;
 
-const asyncHandler = require('../middleware/asyncHandler');
+  if (!query || !lat || !lng) {
+    return res.status(400).json({
+      success: false,
+      message: "query, lat and lng are required",
+    });
+  }
 
-/**
- * GET /api/therapists?specialty=
- * Public directory data — matches the Flutter TherapistService.list().
- */
-const listTherapists = asyncHandler(async (req, res) => {
-  const { specialty } = req.query;
-  const filter = { isActive: true };
-  if (specialty && specialty !== 'All') filter.specialty = specialty;
+  const places = await searchTherapists(
+    query,
+    lat,
+    lng,
+    radius
+  );
 
-  const therapists = await Therapist.find(filter).sort({ name: 1 }).lean();
-  res.json(therapists.map(serialize));
+  res.json({
+    success: true,
+    count: places.length,
+    data: places,
+  });
 });
 
-module.exports = { listTherapists };
+const details = asyncHandler(async (req, res) => {
+  const { placeId } = req.params;
+
+  const therapist = await getTherapistDetails(placeId);
+
+  res.json({
+    success: true,
+    data: therapist,
+  });
+});
+
+module.exports = {
+  search,
+    details,
+
+};

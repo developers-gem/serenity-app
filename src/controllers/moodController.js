@@ -102,6 +102,7 @@ const updateMood = asyncHandler(async (req, res) => {
  * DELETE /api/mood/:id
  * Delete Mood
  */
+
 const deleteMood = asyncHandler(async (req, res) => {
   const deletedMood = await Mood.findOneAndDelete({
     _id: req.params.id,
