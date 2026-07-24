@@ -1,9 +1,5 @@
 const OpenAI = require("openai");
 
-const client = new OpenAI({
-  apiKey: process.env.OPENAI_API_KEY,
-});
-
 const SYSTEM_PROMPT = `
 You are Sage, a calm, supportive AI wellness companion.
 
@@ -21,6 +17,14 @@ Keep responses concise.
 `;
 
 const generateReply = async (userMessage) => {
+  if (!process.env.OPENAI_API_KEY) {
+    throw new Error("OPENAI_API_KEY is not configured.");
+  }
+
+  const client = new OpenAI({
+    apiKey: process.env.OPENAI_API_KEY,
+  });
+
   const completion = await client.chat.completions.create({
     model: "gpt-4.1-mini",
     messages: [
