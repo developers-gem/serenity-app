@@ -1,36 +1,87 @@
-const Notification = require('../models/Notification');
-const asyncHandler = require('../middleware/asyncHandler');
+const asyncHandler = require("../middleware/asyncHandler");
+const Notification = require("../models/Notification");
 
-function serialize(n) {
-  return {
-    id: n._id.toString(),
-    title: n.title,
-    body: n.body,
-    icon: n.icon,
-    read: n.read,
-    createdAt: n.createdAt,
-  };
-}
+// Create notification
+const createNotification = asyncHandler(async (req, res) => {
+  const { title, body, type } = req.body;
 
-/**
- * GET /api/notifications
- */
-const listNotifications = asyncHandler(async (req, res) => {
-  const notifications = await Notification.find({ user: req.user._id })
-    .sort({ createdAt: -1 })
-    .limit(50)
-    .lean();
-  res.json(notifications.map(serialize));
+  const notification = await Notification.create({
+    user: req.user._id,
+    title,
+    body,
+    type,
+  });
+
+  res.status(201).json({
+    success: true,
+    data: notification,
+  });
 });
 
-/**
- * POST /api/notifications/read-all
- * Marks all of the user's notifications as read — mirrors the Flutter
- * NotificationsScreen calling markNotificationsRead() on open.
- */
-const markAllRead = asyncHandler(async (req, res) => {
-  await Notification.updateMany({ user: req.user._id, read: false }, { read: true });
-  res.status(204).send();
+// Get all notifications
+const getNotifications = asyncHandler(async (req, res) => {
+  const notifications = await Notification.find({
+    user: req.user._id,
+  }).sort({ createdAt: -1 });
+
+  res.json({
+    success: true,
+    count: notifications.length,
+    data: notifications,
+  });
 });
 
-module.exports = { listNotifications, markAllRead };
+// Mark notification as read
+const markAsRead = asyncHandler(async (req, res) => {
+  const notification = await Notification.findOneAndUpdate(
+    {
+      _id: req.params.id,
+      user: req.user._id,
+    },
+    {
+      isRead: true,
+    },
+    {
+      new: true,
+    }
+  );
+
+  if (!notification) {
+    return res.status(404).json({
+      success: false,
+      message: "Notification not found",
+    });
+  }
+
+  res.json({
+    success: true,
+    data: notification,
+  });
+});
+
+// Delete notification
+const deleteNotification = asyncHandler(async (req, res) => {
+  const notification = await Notification.findOneAndDelete({
+    _id: req.params.id,
+    user: req.user._id,
+  });
+
+  if (!notification) {
+    return res.status(404).json({
+      success: false,
+      message: "Notification not found",
+    });
+  }
+
+  res.json({
+    success: true,
+    message: "Notification deleted successfully",
+  });
+});
+
+module.exports = {
+  createNotification,
+  getNotifications,
+  markAsRead,
+  deleteNotification,
+};

@@ -22,6 +22,6 @@ router.use('/therapists', therapistRoutes); //done
 router.use('/dashboard', dashboardRoutes);  //done
 router.use('/sessions', sessionRoutes);
 router.use('/billing', billingRoutes);
-router.use('/notifications', notificationRoutes);
+router.use('/notifications', notificationRoutes); //done
 
 module.exports = router;
