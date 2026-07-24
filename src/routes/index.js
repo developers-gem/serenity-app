@@ -19,7 +19,7 @@ router.use('/sage', sageRoutes);  //done
 router.use('/mood', moodRoutes);  //done
 router.use('/journal', journalRoutes);  //done
 router.use('/therapists', therapistRoutes); //done
-router.use("/dashboard", dashboardRoutes);  //done
+router.use('/dashboard', dashboardRoutes);  //done
 router.use('/sessions', sessionRoutes);
 router.use('/billing', billingRoutes);
 router.use('/notifications', notificationRoutes);
